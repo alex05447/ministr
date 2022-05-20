@@ -1,16 +1,16 @@
 use {
     crate::*,
     std::{
-        borrow::ToOwned,
+        borrow::{ToOwned, Cow},
         cmp::PartialEq,
-        convert::TryFrom,
         fmt::{Display, Formatter},
         ops::Deref,
     },
 };
 
-/// A non-empty string slice.
-/// [`NonEmptyString`] is the owned version.
+/// A non-empty UTF-8 string slice.
+///
+/// This is the borrowed version, [`NonEmptyString`] is the owned version.
 #[repr(transparent)]
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub struct NonEmptyStr(str);
@@ -34,7 +34,7 @@ impl NonEmptyStr {
     /// Passing an empty string slice is undefined behaviour.
     ///
     /// # Panics
-    /// Panics in debug configuration only if the `s` is empty.
+    /// In debug configuration only, panics if `s` is empty.
     pub unsafe fn new_unchecked(s: &str) -> &Self {
         debug_assert!(
             !s.is_empty(),
@@ -60,9 +60,15 @@ impl Deref for NonEmptyStr {
     }
 }
 
-impl<'s> AsRef<str> for &'s NonEmptyStr {
+impl AsRef<str> for &NonEmptyStr {
     fn as_ref(&self) -> &str {
         self.inner()
+    }
+}
+
+impl AsRef<NonEmptyStr> for &NonEmptyStr {
+    fn as_ref(&self) -> &NonEmptyStr {
+        self
     }
 }
 
@@ -114,6 +120,12 @@ impl<'s> Into<&'s str> for &'s NonEmptyStr {
 impl<'s> Into<String> for &'s NonEmptyStr {
     fn into(self) -> String {
         self.0.to_owned()
+    }
+}
+
+impl<'s> Into<Cow<'s, str>> for &'s NonEmptyStr {
+    fn into(self) -> Cow<'s, str> {
+        Cow::Borrowed(self.as_str())
     }
 }
 ////////////////////////////////////////////////////////////

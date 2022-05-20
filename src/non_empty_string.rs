@@ -1,16 +1,16 @@
 use {
     crate::*,
     std::{
-        borrow::Borrow,
+        borrow::{Borrow, Cow},
         cmp::PartialEq,
-        convert::TryFrom,
         fmt::{Display, Formatter},
         ops::Deref,
     },
 };
 
 /// A non-empty [`String`].
-/// [`NonEmptyStr`] is the borrowed version.
+///
+/// This is the owned version, [`NonEmptyStr`] is the borrowed version.
 #[repr(transparent)]
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub struct NonEmptyString(String);
@@ -34,7 +34,7 @@ impl NonEmptyString {
     /// Passing an empty string is undefined behaviour.
     ///
     /// # Panics
-    /// Panics in debug configuration only if the string `s` is empty.
+    /// In debug configuration only, panics if `s` is empty.
     pub unsafe fn new_unchecked(s: String) -> Self {
         debug_assert!(
             !s.is_empty(),
@@ -114,6 +114,17 @@ impl TryFrom<String> for NonEmptyString {
         Self::new(s).ok_or(())
     }
 }
+
+impl<'s> TryFrom<Cow<'s, str>> for NonEmptyString {
+    type Error = ();
+
+    fn try_from(s: Cow<'s, str>) -> Result<Self, Self::Error> {
+        match s {
+            Cow::Borrowed(s) => s.try_into(),
+            Cow::Owned(s) => s.try_into(),
+        }
+    }
+}
 ////////////////////////////////////////////////////////////
 
 // Infallible conversion from a non-empty string slice.
@@ -136,6 +147,18 @@ impl<'s> Into<&'s str> for &'s NonEmptyString {
 impl Into<String> for NonEmptyString {
     fn into(self) -> String {
         self.into_inner()
+    }
+}
+
+impl<'s> Into<Cow<'s, str>> for NonEmptyString {
+    fn into(self) -> Cow<'s, str> {
+        Cow::Owned(self.into_inner())
+    }
+}
+
+impl<'s> Into<Cow<'s, str>> for &'s NonEmptyString {
+    fn into(self) -> Cow<'s, str> {
+        Cow::Borrowed(self.as_str())
     }
 }
 ////////////////////////////////////////////////////////////
