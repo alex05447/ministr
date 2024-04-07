@@ -13,7 +13,7 @@ pub fn str_hash_default(s: &str) -> u64 {
 /// Hashes the string literal `s` to a `u32` using the FNV1a (32b) hash.
 pub fn str_hash_fnv1a(s: &str) -> u32 {
     const FNV1A32_PRIME: u32 = 0x0100_0193;
-    const FNV1A32_SEED: u32 = 0x811C_9DC5;
+    const FNV1A32_SEED: u32 = 0x811c_9dc5;
 
     let mut hash = FNV1A32_SEED;
 

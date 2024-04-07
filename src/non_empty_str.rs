@@ -1,9 +1,11 @@
 use {
     crate::*,
+    miniunchecked::*,
     std::{
-        borrow::{ToOwned, Cow},
+        borrow::{Cow, ToOwned},
         cmp::PartialEq,
         fmt::{Display, Formatter},
+        num::NonZeroUsize,
         ops::Deref,
     },
 };
@@ -47,8 +49,11 @@ impl NonEmptyStr {
         &self.0
     }
 
-    pub fn inner(&self) -> &str {
-        &self.0
+    pub fn len_nonzero(&self) -> NonZeroUsize {
+        unsafe {
+            NonZeroUsize::new(self.0.len())
+                .unwrap_unchecked_dbg_msg("non-empty strings have non-zero length")
+        }
     }
 }
 
@@ -56,13 +61,13 @@ impl Deref for NonEmptyStr {
     type Target = str;
 
     fn deref(&self) -> &Self::Target {
-        self.inner()
+        self.as_str()
     }
 }
 
 impl AsRef<str> for &NonEmptyStr {
     fn as_ref(&self) -> &str {
-        self.inner()
+        self.as_str()
     }
 }
 
@@ -108,24 +113,30 @@ impl<'s> From<&'s NonEmptyString> for &'s NonEmptyStr {
 }
 ////////////////////////////////////////////////////////////
 
-// Conversions into string slices and owned strings.
+// Infallible conversions into string slices and owned strings.
 // Conversion into a non-empty owned string is implemented by a `From` on it.
 ////////////////////////////////////////////////////////////
-impl<'s> Into<&'s str> for &'s NonEmptyStr {
-    fn into(self) -> &'s str {
-        self.as_str()
+impl<'s> From<&'s NonEmptyStr> for &'s str {
+    fn from(val: &'s NonEmptyStr) -> Self {
+        val.as_str()
     }
 }
 
-impl<'s> Into<String> for &'s NonEmptyStr {
-    fn into(self) -> String {
-        self.0.to_owned()
+impl<'s> From<&'s NonEmptyStr> for String {
+    fn from(val: &'s NonEmptyStr) -> Self {
+        val.as_str().to_owned()
     }
 }
 
-impl<'s> Into<Cow<'s, str>> for &'s NonEmptyStr {
-    fn into(self) -> Cow<'s, str> {
-        Cow::Borrowed(self.as_str())
+impl<'s> From<&'s NonEmptyStr> for Cow<'s, str> {
+    fn from(val: &'s NonEmptyStr) -> Self {
+        Cow::Borrowed(val.as_str())
+    }
+}
+
+impl<'s> From<&'s NonEmptyStr> for Cow<'s, NonEmptyStr> {
+    fn from(val: &'s NonEmptyStr) -> Self {
+        Cow::Borrowed(val)
     }
 }
 ////////////////////////////////////////////////////////////
@@ -157,6 +168,9 @@ impl PartialEq<NonEmptyStr> for &NonEmptyStr {
 
 /// <str>
 ////////////////////////////////////////////////////////////
+
+/// Direct
+
 impl PartialEq<str> for NonEmptyStr {
     fn eq(&self, other: &str) -> bool {
         PartialEq::eq(self.as_str(), other)
@@ -186,10 +200,45 @@ impl PartialEq<str> for &NonEmptyStr {
         PartialEq::ne(self.as_str(), other)
     }
 }
+
+/// Reverse
+
+impl PartialEq<NonEmptyStr> for str {
+    fn eq(&self, other: &NonEmptyStr) -> bool {
+        PartialEq::eq(self, other.as_str())
+    }
+
+    fn ne(&self, other: &NonEmptyStr) -> bool {
+        PartialEq::ne(self, other.as_str())
+    }
+}
+
+impl PartialEq<&NonEmptyStr> for str {
+    fn eq(&self, other: &&NonEmptyStr) -> bool {
+        PartialEq::eq(self, other.as_str())
+    }
+
+    fn ne(&self, other: &&NonEmptyStr) -> bool {
+        PartialEq::ne(self, other.as_str())
+    }
+}
+
+impl PartialEq<NonEmptyStr> for &str {
+    fn eq(&self, other: &NonEmptyStr) -> bool {
+        PartialEq::eq(*self, other.as_str())
+    }
+
+    fn ne(&self, other: &NonEmptyStr) -> bool {
+        PartialEq::ne(*self, other.as_str())
+    }
+}
 ////////////////////////////////////////////////////////////
 
 /// <String>
 ////////////////////////////////////////////////////////////
+
+/// Direct
+
 impl PartialEq<String> for NonEmptyStr {
     fn eq(&self, other: &String) -> bool {
         PartialEq::eq(self.as_str(), other.as_str())
@@ -216,6 +265,38 @@ impl PartialEq<String> for &NonEmptyStr {
     }
 
     fn ne(&self, other: &String) -> bool {
+        PartialEq::ne(self.as_str(), other.as_str())
+    }
+}
+
+/// Reverse
+
+impl PartialEq<NonEmptyStr> for String {
+    fn eq(&self, other: &NonEmptyStr) -> bool {
+        PartialEq::eq(self.as_str(), other.as_str())
+    }
+
+    fn ne(&self, other: &NonEmptyStr) -> bool {
+        PartialEq::ne(self.as_str(), other.as_str())
+    }
+}
+
+impl PartialEq<&NonEmptyStr> for String {
+    fn eq(&self, other: &&NonEmptyStr) -> bool {
+        PartialEq::eq(self.as_str(), other.as_str())
+    }
+
+    fn ne(&self, other: &&NonEmptyStr) -> bool {
+        PartialEq::ne(self.as_str(), other.as_str())
+    }
+}
+
+impl PartialEq<NonEmptyStr> for &String {
+    fn eq(&self, other: &NonEmptyStr) -> bool {
+        PartialEq::eq(self.as_str(), other.as_str())
+    }
+
+    fn ne(&self, other: &NonEmptyStr) -> bool {
         PartialEq::ne(self.as_str(), other.as_str())
     }
 }
@@ -256,7 +337,7 @@ impl PartialEq<NonEmptyString> for &NonEmptyStr {
 
 impl<'s> Display for &'s NonEmptyStr {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        self.inner().fmt(f)
+        self.as_str().fmt(f)
     }
 }
 
@@ -266,12 +347,15 @@ mod tests {
 
     fn cmp(nes: &NonEmptyStr, s: &str) {
         assert_eq!(nes, s);
-        //assert_eq!(s, nes);
+        assert_eq!(s, nes);
         assert_eq!(&nes[..], s);
-        assert_eq!(nes.as_ref(), s);
+        assert_eq!(&s[..], nes);
+        assert_eq!(<&NonEmptyStr as AsRef<str>>::as_ref(&nes), s);
+        assert_eq!(s, <&NonEmptyStr as AsRef<str>>::as_ref(&nes));
         assert_eq!(nes.as_str(), s);
+        assert_eq!(s, nes.as_str());
         assert_eq!(nes.deref(), s);
-        assert_eq!(nes.inner(), s);
+        assert_eq!(s, nes.deref());
     }
 
     #[test]
