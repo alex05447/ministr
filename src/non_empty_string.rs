@@ -62,6 +62,16 @@ impl NonEmptyString {
         unsafe { NonEmptyString::new_unchecked(s.to_owned()) }
     }
 
+    /// See [`String::push()`].
+    pub fn push(&mut self, c: char) {
+        self.0.push(c);
+    }
+
+    /// See [`String::push_str()`].
+    pub fn push_str(&mut self, s: &str) {
+        self.0.push_str(s);
+    }
+
     pub fn as_str(&self) -> &str {
         self.0.as_str()
     }
