@@ -10,7 +10,7 @@ use {
     },
 };
 
-/// A non-empty UTF-8 string slice.
+/// A non-empty [`string slice`](str).
 ///
 /// This is the borrowed version, [`NonEmptyString`] is the owned version.
 #[repr(transparent)]
@@ -19,6 +19,7 @@ pub struct NonEmptyStr(str);
 
 impl NonEmptyStr {
     /// Tries to create a [`NonEmptyStr`] from the string slice `s`.
+    ///
     /// Returns `None` if the string `s` is empty.
     pub fn new(s: &str) -> Option<&Self> {
         if s.is_empty() {
@@ -32,17 +33,19 @@ impl NonEmptyStr {
     /// without checking if it is empty.
     ///
     /// # Safety
+    ///
     /// The caller guarantees the string `s` is not empty.
     /// Passing an empty string slice is undefined behaviour.
     ///
     /// # Panics
+    ///
     /// In debug configuration only, panics if `s` is empty.
     pub unsafe fn new_unchecked(s: &str) -> &Self {
         debug_assert!(
             !s.is_empty(),
-            "tried to create a non-empty string slice from an empty source"
+            "tried to create a non-empty string slice from an empty string"
         );
-        &*(s as *const str as *const _)
+        unsafe { &*(s as *const str as *const _) }
     }
 
     pub fn as_str(&self) -> &str {
@@ -149,35 +152,23 @@ impl PartialEq<&NonEmptyStr> for NonEmptyStr {
     fn eq(&self, other: &&NonEmptyStr) -> bool {
         PartialEq::eq(self, *other)
     }
-
-    fn ne(&self, other: &&NonEmptyStr) -> bool {
-        PartialEq::ne(self, *other)
-    }
 }
 
 impl PartialEq<NonEmptyStr> for &NonEmptyStr {
     fn eq(&self, other: &NonEmptyStr) -> bool {
         PartialEq::eq(*self, other)
     }
-
-    fn ne(&self, other: &NonEmptyStr) -> bool {
-        PartialEq::ne(*self, other)
-    }
 }
 ////////////////////////////////////////////////////////////
 
-/// <str>
+// <str>
 ////////////////////////////////////////////////////////////
 
-/// Direct
+// Direct
 
 impl PartialEq<str> for NonEmptyStr {
     fn eq(&self, other: &str) -> bool {
         PartialEq::eq(self.as_str(), other)
-    }
-
-    fn ne(&self, other: &str) -> bool {
-        PartialEq::ne(self.as_str(), other)
     }
 }
 
@@ -185,31 +176,19 @@ impl PartialEq<&str> for NonEmptyStr {
     fn eq(&self, other: &&str) -> bool {
         PartialEq::eq(self.as_str(), *other)
     }
-
-    fn ne(&self, other: &&str) -> bool {
-        PartialEq::ne(self.as_str(), *other)
-    }
 }
 
 impl PartialEq<str> for &NonEmptyStr {
     fn eq(&self, other: &str) -> bool {
         PartialEq::eq(self.as_str(), other)
     }
-
-    fn ne(&self, other: &str) -> bool {
-        PartialEq::ne(self.as_str(), other)
-    }
 }
 
-/// Reverse
+// Reverse
 
 impl PartialEq<NonEmptyStr> for str {
     fn eq(&self, other: &NonEmptyStr) -> bool {
         PartialEq::eq(self, other.as_str())
-    }
-
-    fn ne(&self, other: &NonEmptyStr) -> bool {
-        PartialEq::ne(self, other.as_str())
     }
 }
 
@@ -217,35 +196,23 @@ impl PartialEq<&NonEmptyStr> for str {
     fn eq(&self, other: &&NonEmptyStr) -> bool {
         PartialEq::eq(self, other.as_str())
     }
-
-    fn ne(&self, other: &&NonEmptyStr) -> bool {
-        PartialEq::ne(self, other.as_str())
-    }
 }
 
 impl PartialEq<NonEmptyStr> for &str {
     fn eq(&self, other: &NonEmptyStr) -> bool {
         PartialEq::eq(*self, other.as_str())
     }
-
-    fn ne(&self, other: &NonEmptyStr) -> bool {
-        PartialEq::ne(*self, other.as_str())
-    }
 }
 ////////////////////////////////////////////////////////////
 
-/// <String>
+// <String>
 ////////////////////////////////////////////////////////////
 
-/// Direct
+// Direct
 
 impl PartialEq<String> for NonEmptyStr {
     fn eq(&self, other: &String) -> bool {
         PartialEq::eq(self.as_str(), other.as_str())
-    }
-
-    fn ne(&self, other: &String) -> bool {
-        PartialEq::ne(self.as_str(), other.as_str())
     }
 }
 
@@ -253,31 +220,19 @@ impl PartialEq<&String> for NonEmptyStr {
     fn eq(&self, other: &&String) -> bool {
         PartialEq::eq(self.as_str(), other.as_str())
     }
-
-    fn ne(&self, other: &&String) -> bool {
-        PartialEq::ne(self.as_str(), other.as_str())
-    }
 }
 
 impl PartialEq<String> for &NonEmptyStr {
     fn eq(&self, other: &String) -> bool {
         PartialEq::eq(self.as_str(), other.as_str())
     }
-
-    fn ne(&self, other: &String) -> bool {
-        PartialEq::ne(self.as_str(), other.as_str())
-    }
 }
 
-/// Reverse
+// Reverse
 
 impl PartialEq<NonEmptyStr> for String {
     fn eq(&self, other: &NonEmptyStr) -> bool {
         PartialEq::eq(self.as_str(), other.as_str())
-    }
-
-    fn ne(&self, other: &NonEmptyStr) -> bool {
-        PartialEq::ne(self.as_str(), other.as_str())
     }
 }
 
@@ -285,32 +240,20 @@ impl PartialEq<&NonEmptyStr> for String {
     fn eq(&self, other: &&NonEmptyStr) -> bool {
         PartialEq::eq(self.as_str(), other.as_str())
     }
-
-    fn ne(&self, other: &&NonEmptyStr) -> bool {
-        PartialEq::ne(self.as_str(), other.as_str())
-    }
 }
 
 impl PartialEq<NonEmptyStr> for &String {
     fn eq(&self, other: &NonEmptyStr) -> bool {
         PartialEq::eq(self.as_str(), other.as_str())
     }
-
-    fn ne(&self, other: &NonEmptyStr) -> bool {
-        PartialEq::ne(self.as_str(), other.as_str())
-    }
 }
 ////////////////////////////////////////////////////////////
 
-/// <NonEmptyString>
+// <NonEmptyString>
 ////////////////////////////////////////////////////////////
 impl PartialEq<NonEmptyString> for NonEmptyStr {
     fn eq(&self, other: &NonEmptyString) -> bool {
         PartialEq::eq(self, other.as_ne_str())
-    }
-
-    fn ne(&self, other: &NonEmptyString) -> bool {
-        PartialEq::ne(self, other.as_ne_str())
     }
 }
 
@@ -318,24 +261,16 @@ impl PartialEq<&NonEmptyString> for NonEmptyStr {
     fn eq(&self, other: &&NonEmptyString) -> bool {
         PartialEq::eq(self, other.as_ne_str())
     }
-
-    fn ne(&self, other: &&NonEmptyString) -> bool {
-        PartialEq::ne(self, other.as_ne_str())
-    }
 }
 
 impl PartialEq<NonEmptyString> for &NonEmptyStr {
     fn eq(&self, other: &NonEmptyString) -> bool {
         PartialEq::eq(self, other.as_ne_str())
     }
-
-    fn ne(&self, other: &NonEmptyString) -> bool {
-        PartialEq::ne(self, other.as_ne_str())
-    }
 }
 ////////////////////////////////////////////////////////////
 
-impl<'s> Display for &'s NonEmptyStr {
+impl Display for &NonEmptyStr {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         self.as_str().fmt(f)
     }
@@ -345,6 +280,7 @@ impl<'s> Display for &'s NonEmptyStr {
 mod tests {
     use super::*;
 
+    #[allow(clippy::redundant_slicing)]
     fn cmp(nes: &NonEmptyStr, s: &str) {
         assert_eq!(nes, s);
         assert_eq!(s, nes);
@@ -444,7 +380,7 @@ mod tests {
 
     #[cfg(debug_assertions)]
     #[test]
-    #[should_panic(expected = "tried to create a non-empty string slice from an empty source")]
+    #[should_panic(expected = "tried to create a non-empty string slice from an empty string")]
     fn new_unchecked_panic() {
         let _ = unsafe { NonEmptyStr::new_unchecked("") };
     }
